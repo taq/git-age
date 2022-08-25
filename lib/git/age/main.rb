@@ -1,13 +1,14 @@
+require 'io/console'
+
 module Git
   module Age
     class Main
-      JUSTIFICATION = 150
-
       def initialize
         STDOUT.puts "Waiting, analysing your repository ..."
 
-        @dates = Hash.new(0)
-        @files = files
+        @dates   = Hash.new(0)
+        @files   = files
+        @winsize = IO.console.winsize
       end
 
       def run
@@ -22,24 +23,34 @@ module Git
       private
 
       def read_files
-        cnt   = 0
-        total = @files.size
+        cnt     = 0
+        total   = @files.size
+        mapfile = Git::Age::Options.instance.map ? File.open("/tmp/git-age.map", 'w') : nil
+
 
         @files.each do |file|
           cnt += 1
           next unless text?(file)
 
-          print "Checking [#{cnt}/#{total}] #{file.ljust(JUSTIFICATION)} ...\r"
+          print "Checking [#{cnt}/#{total}] #{file} ...".ljust(@winsize[1]) + "\r"
 
-          IO.popen("git blame #{file} | iconv -t utf8") do |io|
-            io.read.split("\n")
-          end.each do |line|
-            matches = line.match(/\(.*(?<date>\d{4}-\d{2})-\d{2}.*\)/)
-            next unless matches
+          begin
+            IO.popen("git blame #{file} | iconv -t utf8") do |io|
+              io.read.split("\n")
+            end.each do |line|
+              matches = line.match(/[\w^]+\s\([\w\s]+(?<date>\d{4}-\d{2})-\d{2}/)
+              next unless matches
 
-            @dates[matches[:date]] += 1
+              mapfile << "#{file}: #{line}\n" if mapfile
+
+              @dates[matches[:date]] += 1
+            end
+          rescue => blame
+            print "Error on file: #{file}\r"
           end
         end
+
+        mapfile.close if mapfile
       rescue => e
         STDERR.puts "Error reading files: #{e}"
       end
@@ -50,7 +61,7 @@ module Git
 
       def create_csv
         output = Git::Age::Options.instance.output
-        STDOUT.puts "Creating CSV file #{output} ...".ljust(JUSTIFICATION)
+        STDOUT.puts "Creating CSV file #{output} ...".ljust(@winsize[1])
 
         File.open(output, 'w') do |file|
           @dates.each do |key, value|

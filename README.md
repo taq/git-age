@@ -22,6 +22,7 @@ Go to your repository and run:
 ```
 Usage: git-age [options]
     -b, --branch=BRANCH              Git branch
+    -m, --map                        Create a file with processed files and dates
     -o, --output=FILE                Output file
     -i, --image=FILE                 Image file
     -g, --graph=PROCESSOR            Graphic processor

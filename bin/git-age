@@ -13,6 +13,11 @@ opts.on('-b', '--branch=BRANCH', 'Git branch') do |branch|
   options.branch = branch
 end
 
+opts.on('-m', '--map', 'Create a file with processed files and dates') do
+  STDOUT.puts "Creating map file"
+  options.map = true
+end
+
 opts.on('-o', '--output=FILE', 'Output file') do |file|
   STDOUT.puts "Output to #{file}"
   options.output = file

@@ -64,8 +64,10 @@ module Git
         STDOUT.puts "Creating CSV file #{output} ...".ljust(@winsize[1])
 
         File.open(output, 'w') do |file|
+          file << "\"date\",\"lines\"\n"
+
           @dates.each do |key, value|
-            file << "#{key},#{value}\n"
+            file << "\"#{key}\",#{value}\n"
           end
         end
       rescue => e

@@ -1,8 +1,11 @@
+require 'date'
 require 'io/console'
 
 module Git
   module Age
     class Main
+      attr_reader :dates, :files
+
       def initialize
         STDOUT.puts "Waiting, analysing your repository ..."
 
@@ -16,6 +19,7 @@ module Git
         sort_dates
         create_csv
         create_image
+        show_stats
       rescue => e
         STDERR.puts "Error: #{e}"
       end
@@ -26,7 +30,6 @@ module Git
         cnt     = 0
         total   = @files.size
         mapfile = Git::Age::Options.instance.map ? File.open("/tmp/git-age.map", 'w') : nil
-
 
         @files.each do |file|
           cnt += 1
@@ -108,6 +111,19 @@ module Git
         IO.popen("file -i -b #{file}") do |io|
           io.read
         end.match?(/\Atext/)
+      end
+
+      def show_stats
+        stats  = Git::Age::Stats.new(self)
+        first  = Date.parse(stats.first_commit)
+        last   = Date.parse(stats.last_commit)
+        diff   = (last - first).to_i
+        ustats = stats.unchanged_stats
+
+        puts "First commit in: #{first}"
+        puts "Last  commit in: #{last}"
+        puts "Repository is #{diff} days old"
+        puts "Month with more lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
       end
     end
   end

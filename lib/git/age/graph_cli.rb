@@ -11,11 +11,10 @@ module Git
         options = Git::Age::Options.instance
         STDOUT.puts "Creating image #{options.image} ..."
 
-        cmd = "graph #{input} --bar -o #{options.image} --title '#{options.title}' --xlabel='#{options.xtitle}' --ylabel='#{options.ytitle}' --xtick-fontsize 5 --time-format-output '%Y-%m-%d' --legend=''"
+        cmd = "graph #{input} --bar -o #{options.image} --title '#{options.title}' --xlabel='#{options.xtitle}' --ylabel='#{options.ytitle}' --xtick-fontsize 5 --time-format-output '%Y-%m-%d' --legend='' 2> /dev/null"
         rst = IO.popen(cmd) do |io|
           io.read
         end
-        STDOUT.puts rst
       end
     end
   end

@@ -1,0 +1,101 @@
+module Git
+  module Age
+    class Main
+      JUSTIFICATION = 150
+
+      def initialize
+        STDOUT.puts "Waiting, analysing your repository ..."
+
+        @dates = Hash.new(0)
+        @files = files
+      end
+
+      def run
+        read_files
+        sort_dates
+        create_csv
+        create_image
+      rescue => e
+        STDERR.puts "Error: #{e}"
+      end
+
+      private
+
+      def read_files
+        cnt   = 0
+        total = @files.size
+
+        @files.each do |file|
+          cnt += 1
+          next unless text?(file)
+
+          print "Checking [#{cnt}/#{total}] #{file.ljust(JUSTIFICATION)} ...\r"
+
+          IO.popen("git blame #{file} | iconv -t utf8") do |io|
+            io.read.split("\n")
+          end.each do |line|
+            matches = line.match(/\(.*(?<date>\d{4}-\d{2})-\d{2}.*\)/)
+            next unless matches
+
+            @dates[matches[:date]] += 1
+          end
+        end
+      rescue => e
+        STDERR.puts "Error reading files: #{e}"
+      end
+
+      def sort_dates
+        @dates = @dates.sort_by { |k, v| k }
+      end
+
+      def create_csv
+        output = Git::Age::Options.instance.output
+        STDOUT.puts "Creating CSV file #{output} ...".ljust(JUSTIFICATION)
+
+        File.open(output, 'w') do |file|
+          @dates.each do |key, value|
+            file << "#{key},#{value}\n"
+          end
+        end
+      rescue => e
+        STDERR.puts "Error creating CSV file: #{e}"
+      end
+
+      def create_image
+        options   = Options.instance
+        processor = {
+          'graph-cli' => Git::Age::GraphCli
+        }[options.processor]
+
+        unless processor
+          STDERR.puts "Image processor not supported: #{options.processor}"
+          return
+        end
+
+        unless processor.present?
+          STDERR.puts "Image processor #{options.processor} is not installed"
+          return
+        end
+
+        processor.create(options.output)
+      end
+
+      def files
+        branch = Git::Age::Options.instance.branch
+        STDOUT.puts "Reading files info from #{branch} branch ..."
+
+        IO.popen("git ls-tree -r #{branch} --name-only") do |io|
+          io.read.split("\n")
+        end
+      rescue => e
+        STDERR.puts "Error while searching for Git controlled files: #{e}"
+      end
+
+      def text?(file)
+        IO.popen("file -i -b #{file}") do |io|
+          io.read
+        end.match?(/\Atext/)
+      end
+    end
+  end
+end

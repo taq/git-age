@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+
+require_relative "../lib/git/age"
+require 'optparse'
+
+options = Git::Age::Options.instance
+
+opts = OptionParser.new
+opts.banner = 'Usage: git-age [options]'
+
+opts.on('-b', '--branch=BRANCH', 'Git branch') do |branch|
+  STDOUT.puts "Git branch: #{branch}"
+  options.branch = branch
+end
+
+opts.on('-o', '--output=FILE', 'Output file') do |file|
+  STDOUT.puts "Output to #{file}"
+  options.output = file
+end
+
+opts.on('-i', '--image=FILE', 'Image file') do |file|
+  STDOUT.puts "Image output to #{file}"
+  options.image = file
+end
+
+opts.on('-g', '--graph=PROCESSOR', 'Graphic processor') do |processor|
+  STDOUT.puts "Using graphic processor #{processor}"
+  options.processor = processor
+end
+
+opts.on('-t', '--title=TITLE', 'Graphic title') do |title|
+  STDOUT.puts "Using title #{title}"
+  options.title = title
+end
+
+opts.on('-x', '--xtitle=TITLE', 'X axis title') do |title|
+  STDOUT.puts "Using X axis title #{title}"
+  options.xtitle = title
+end
+
+opts.on('-y', '--ytitle=TITLE', 'Y axis title') do |title|
+  STDOUT.puts "Using Y axis title #{title}"
+  options.ytitle = title
+end
+
+opts.parse!
+
+Git::Age::Main.new.run

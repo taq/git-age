@@ -41,6 +41,10 @@ Supported image processors:
 
 - [graph-cli](https://github.com/mcastorina/graph-cli)
 
+Example image:
+
+![graph-cli graph](https://github.com/taq/git-age/blob/master/graph-cli.png?raw=true)
+
 Default options are:
 
 - branch: master

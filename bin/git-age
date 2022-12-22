@@ -48,9 +48,14 @@ opts.on('-y', '--ytitle=TITLE', 'Y axis title') do |title|
   options.ytitle = title
 end
 
-opts.on('-e', '--test=TITLE', 'Test dir pattern') do |pattern|
+opts.on('-e', '--test=PATTERN', 'Test dir pattern') do |pattern|
   STDOUT.puts "Using test dir pattern #{pattern}"
   options.test = pattern
+end
+
+opts.on('-c', '--code=PATTERN', 'Code dir pattern') do |pattern|
+  STDOUT.puts "Using code dir pattern #{pattern}"
+  options.code = pattern
 end
 
 opts.on('-y', '--type=TYPE', 'Graph type, defaults to bar') do |type|

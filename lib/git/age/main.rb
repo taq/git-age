@@ -13,6 +13,10 @@ module Git
         @files   = files
         @winsize = IO.console.winsize
         @test    = Git::Age::Options.instance.test
+        @code    = Git::Age::Options.instance.code
+
+        @test_regexp = @test ? %r{^#{@test}} : nil
+        @code_regexp = @code ? %r{^#{@code}} : nil
       end
 
       def run
@@ -28,11 +32,18 @@ module Git
 
       private
 
+      def file_type(file)
+        return :t if @test_regexp && file.match(@test_regexp)
+
+        return :c unless @code_regexp
+
+         @code_regexp && file.match(@code_regexp) ? :c : :u
+      end
+
       def read_files
         cnt     = 0
         total   = @files.size
         mapfile = Git::Age::Options.instance.map ? File.open("/tmp/git-age.map", 'w') : nil
-        test    = @test ? %r{^#{@test}} : nil
 
         @files.each do |file|
           cnt += 1
@@ -47,14 +58,11 @@ module Git
               matches = line.match(/[\w^]+\s\([\w\s]+(?<date>\d{4}-\d{2})-\d{2}/)
               next unless matches
 
-              test_file = test && file.match(test)
-              mapfile << "#{file}[#{test_file ? 't' : 'c'}]: #{line}\n" if mapfile
+              type = file_type(file)
+              mapfile << "#{file}[#{type}]: #{line}\n" if mapfile
 
-              if test_file
-                @dates[matches[:date]][:test] += 1
-              else
-                @dates[matches[:date]][:code] += 1
-              end
+              @dates[matches[:date]][:test] += 1 if type == :t
+              @dates[matches[:date]][:code] += 1 if type == :c
             end
           rescue => blame
             print "Error on file: #{file}\r"
@@ -136,6 +144,11 @@ module Git
         puts "Last  commit in: #{last}"
         puts "Repository has #{diff} days with commits"
         puts "Month with more code lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
+
+        if @test_regexp && @code_regexp
+          ratio = stats.code_to_test_ratio
+          puts "Code to test ratio: 1:#{ratio[:ratio]} (#{ratio[:code]}/#{ratio[:test]})"
+        end
       end
     end
   end

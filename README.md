@@ -29,6 +29,7 @@ Usage: git-age [options]
     -t, --title=TITLE                Graphic title
     -x, --xtitle=TITLE               X axis title
     -y, --ytitle=TITLE               Y axis title
+    -c, --code=PATTERN               Code dir pattern
     -e, --test=PATTERN               Test dir pattern
     -y, --type=TYPE                  Graph type, default to bar
 ```
@@ -37,6 +38,21 @@ Example:
 
 ```
 $ git-age -o /tmp/data.csv -t 'Test project' -x 'Dates here' -y 'Lines here' -i /tmp/data.png
+```
+
+Sending a dir pattern as your test dir, creating a test column to compare:
+
+```
+$ git-age -o /tmp/data.csv -t 'Test project' -x 'Dates here' -y 'Lines here' -i /tmp/data.png -e test
+```
+
+If you're sending a test dir, it can be unfair if you don't also send a dir
+pattern to your code dir, because all other files (configurations, temporary
+files) will count as code and your code to test ratio will implode. So, sending
+a code dir pattern:
+
+```
+$ git-age -o /tmp/data.csv -t 'Test project' -x 'Dates here' -y 'Lines here' -i /tmp/data.png -e test -c app
 ```
 
 Supported image processors:

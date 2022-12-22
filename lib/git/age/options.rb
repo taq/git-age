@@ -4,7 +4,7 @@ module Git
   module Age
     class Options
       include Singleton
-      attr_accessor :branch, :output, :title, :processor, :image, :xtitle, :ytitle, :map, :test, :type
+      attr_accessor :branch, :output, :title, :processor, :image, :xtitle, :ytitle, :map, :test, :code, :type
 
       def initialize
         @branch    = 'master'
@@ -15,6 +15,7 @@ module Git
         @xtitle    = 'Dates'
         @ytitle    = 'Lines'
         @test      = nil
+        @code      = nil
         @type      = 'bar'
         @map       = false
       end

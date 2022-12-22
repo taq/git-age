@@ -53,6 +53,11 @@ opts.on('-e', '--test=TITLE', 'Test dir pattern') do |pattern|
   options.test = pattern
 end
 
+opts.on('-y', '--type=TYPE', 'Graph type, defaults to bar') do |type|
+  STDOUT.puts "Using graph type #{type}"
+  options.type = type
+end
+
 opts.parse!
 
 Git::Age::Main.new.run

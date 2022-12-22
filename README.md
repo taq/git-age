@@ -30,6 +30,7 @@ Usage: git-age [options]
     -x, --xtitle=TITLE               X axis title
     -y, --ytitle=TITLE               Y axis title
     -e, --test=PATTERN               Test dir pattern
+    -y, --type=TYPE                  Graph type, default to bar
 ```
 
 Example:
@@ -41,6 +42,7 @@ $ git-age -o /tmp/data.csv -t 'Test project' -x 'Dates here' -y 'Lines here' -i 
 Supported image processors:
 
 - [graph-cli](https://github.com/mcastorina/graph-cli)
+  Supports bar graphs (`-y bar`, default) and line graphs (`-y line`).
 
 Example image:
 

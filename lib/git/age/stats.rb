@@ -14,8 +14,8 @@ module Git
       end
 
       def unchanged_stats
-        max = @data.dates.max_by { |key, value| value }
-        { bigger: { date: max[0], lines: max[1] } }
+        max = @data.dates.max_by { |key, value| value[:code] }
+        { bigger: { date: max[0], lines: max[1][:code] } }
       end
 
       private

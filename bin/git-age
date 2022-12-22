@@ -48,6 +48,11 @@ opts.on('-y', '--ytitle=TITLE', 'Y axis title') do |title|
   options.ytitle = title
 end
 
+opts.on('-e', '--test=TITLE', 'Test dir pattern') do |pattern|
+  STDOUT.puts "Using test dir pattern #{pattern}"
+  options.test = pattern
+end
+
 opts.parse!
 
 Git::Age::Main.new.run

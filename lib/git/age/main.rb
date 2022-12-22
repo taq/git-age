@@ -9,9 +9,10 @@ module Git
       def initialize
         STDOUT.puts "Waiting, analysing your repository ..."
 
-        @dates   = Hash.new(0)
+        @dates   = Hash.new { |hash, key| hash[key] = { code: 0, test: 0 } }
         @files   = files
         @winsize = IO.console.winsize
+        @test    = Git::Age::Options.instance.test
       end
 
       def run
@@ -22,6 +23,7 @@ module Git
         show_stats
       rescue => e
         STDERR.puts "Error: #{e}"
+        puts e.backtrace
       end
 
       private
@@ -30,6 +32,7 @@ module Git
         cnt     = 0
         total   = @files.size
         mapfile = Git::Age::Options.instance.map ? File.open("/tmp/git-age.map", 'w') : nil
+        test    = @test ? %r{^#{@test}} : nil
 
         @files.each do |file|
           cnt += 1
@@ -44,9 +47,14 @@ module Git
               matches = line.match(/[\w^]+\s\([\w\s]+(?<date>\d{4}-\d{2})-\d{2}/)
               next unless matches
 
-              mapfile << "#{file}: #{line}\n" if mapfile
+              test_file = test && file.match(test)
+              mapfile << "#{file}[#{test_file ? 't' : 'c'}]: #{line}\n" if mapfile
 
-              @dates[matches[:date]] += 1
+              if test_file
+                @dates[matches[:date]][:test] += 1
+              else
+                @dates[matches[:date]][:code] += 1
+              end
             end
           rescue => blame
             print "Error on file: #{file}\r"
@@ -64,13 +72,17 @@ module Git
 
       def create_csv
         output = Git::Age::Options.instance.output
-        STDOUT.puts "Creating CSV file #{output} ...".ljust(@winsize[1])
+        STDOUT.puts "Creating CSV file #{output} with #{@dates.size} lines ...".ljust(@winsize[1])
 
         File.open(output, 'w') do |file|
-          file << "\"date\",\"lines\"\n"
+          header = "\"date\",\"code\""
+          header << ",\"test\"" if @test
+          file << "#{header}\n"
 
-          @dates.each do |key, value|
-            file << "\"#{key}\",#{value}\n"
+          @dates.each do |key, data|
+            line = "\"#{key}\",#{data[:code]}"
+            line << ",#{data[:test]}" if @test
+            file << "#{line}\n"
           end
         end
       rescue => e
@@ -117,13 +129,13 @@ module Git
         stats  = Git::Age::Stats.new(self)
         first  = Date.parse(stats.first_commit)
         last   = Date.parse(stats.last_commit)
-        diff   = (last - first).to_i
+        diff   = (last - first).to_i + 1
         ustats = stats.unchanged_stats
 
         puts "First commit in: #{first}"
         puts "Last  commit in: #{last}"
-        puts "Repository is #{diff} days old"
-        puts "Month with more lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
+        puts "Repository has #{diff} days with commits"
+        puts "Month with more code lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
       end
     end
   end

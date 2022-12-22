@@ -29,6 +29,7 @@ Usage: git-age [options]
     -t, --title=TITLE                Graphic title
     -x, --xtitle=TITLE               X axis title
     -y, --ytitle=TITLE               Y axis title
+    -e, --test=PATTERN               Test dir pattern
 ```
 
 Example:

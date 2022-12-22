@@ -58,7 +58,7 @@ opts.on('-c', '--code=PATTERN', 'Code dir pattern') do |pattern|
   options.code = pattern
 end
 
-opts.on('-y', '--type=TYPE', 'Graph type, defaults to bar') do |type|
+opts.on('-p', '--type=TYPE', 'Graph type, defaults to bar') do |type|
   STDOUT.puts "Using graph type #{type}"
   options.type = type
 end

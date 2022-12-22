@@ -63,6 +63,11 @@ opts.on('-y', '--type=TYPE', 'Graph type, defaults to bar') do |type|
   options.type = type
 end
 
+opts.on('-v', '--version', 'Show version') do
+  STDOUT.puts "Version #{Git::Age::VERSION}"
+  return
+end
+
 opts.parse!
 
 Git::Age::Main.new.run

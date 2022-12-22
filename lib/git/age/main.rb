@@ -10,7 +10,7 @@ module Git
         STDOUT.puts "Waiting, analysing your repository ..."
 
         @dates   = Hash.new { |hash, key| hash[key] = { code: 0, test: 0 } }
-        @files   = files
+        @files   = fill_files
         @winsize = IO.console.winsize
         @test    = Git::Age::Options.instance.test
         @code    = Git::Age::Options.instance.code
@@ -64,8 +64,8 @@ module Git
               @dates[matches[:date]][:test] += 1 if type == :t
               @dates[matches[:date]][:code] += 1 if type == :c
             end
-          rescue => blame
-            print "Error on file: #{file}\r"
+          rescue => exc
+            print "Error on file: #{file}: #{exc}\r"
           end
         end
 
@@ -116,7 +116,7 @@ module Git
         processor.create(options.output)
       end
 
-      def files
+      def fill_files
         branch = Git::Age::Options.instance.branch
         STDOUT.puts "Reading files info from #{branch} branch ..."
 

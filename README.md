@@ -32,6 +32,7 @@ Usage: git-age [options]
     -c, --code=PATTERN               Code dir pattern
     -e, --test=PATTERN               Test dir pattern
     -y, --type=TYPE                  Graph type, default to bar
+    -v, --version                    Show version
 ```
 
 Example:

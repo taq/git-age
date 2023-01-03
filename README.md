@@ -32,6 +32,7 @@ Usage: git-age [options]
     -c, --code=PATTERN               Code dir pattern
     -e, --test=PATTERN               Test dir pattern
     -p, --type=TYPE                  Graph type, default to bar
+    -a, --authors [FILE]             Create statistics by author
     -v, --version                    Show version
 ```
 

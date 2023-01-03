@@ -68,6 +68,11 @@ opts.on('-v', '--version', 'Show version') do
   return
 end
 
+opts.on('-a', '--authors [FILE]', 'Create authors file') do |file|
+  STDOUT.puts "Creating authors file"
+  options.authors = file.to_s.strip.size > 0 ? file : "git-age-authors.csv"
+end
+
 opts.parse!
 
 Git::Age::Main.new.run

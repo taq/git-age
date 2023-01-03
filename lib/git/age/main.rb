@@ -8,12 +8,15 @@ module Git
 
       def initialize
         STDOUT.puts "Waiting, analysing your repository ..."
+        options = Git::Age::Options.instance
 
         @dates   = Hash.new { |hash, key| hash[key] = { code: 0, test: 0 } }
         @files   = fill_files
         @winsize = IO.console.winsize
-        @test    = Git::Age::Options.instance.test
-        @code    = Git::Age::Options.instance.code
+        @test    = options.test
+        @code    = options.code
+        @mapfile = options.map ? File.open("/tmp/git-age.map", 'w') : nil
+        @authors = options.authors ? Hash.new(0) : nil
 
         @test_regexp = @test ? %r{^#{@test}} : nil
         @code_regexp = @code ? %r{^#{@code}} : nil
@@ -43,7 +46,6 @@ module Git
       def read_files
         cnt     = 0
         total   = @files.size
-        mapfile = Git::Age::Options.instance.map ? File.open("/tmp/git-age.map", 'w') : nil
 
         @files.each do |file|
           cnt += 1
@@ -55,7 +57,7 @@ module Git
             IO.popen("git blame #{file} | iconv -t utf8") do |io|
               io.read.split("\n")
             end.each do |line|
-              matches = line.match(/[\w^]+\s\([\w\s]+(?<date>\d{4}-\d{2})-\d{2}/)
+              matches = line.match(/[\w^]+\s\((?<author>[\w\s]+)(?<date>\d{4}-\d{2})-\d{2}/)
               next unless matches
 
               tokens   = line.strip.split(')')
@@ -63,19 +65,33 @@ module Git
               next if contents.size == 0
 
               type = file_type(file)
-              mapfile << "#{file}[#{type}]: #{line}\n" if mapfile
+              @mapfile << "#{file}[#{type}]: #{line}\n" if @mapfile
 
               @dates[matches[:date]][:test] += 1 if type == :t
               @dates[matches[:date]][:code] += 1 if type == :c
+
+              @authors[matches[:author].strip.chomp] += 1 if @authors
             end
           rescue => exc
             print "Error on file: #{file}: #{exc}\r"
           end
         end
 
-        mapfile.close if mapfile
+        @mapfile.close if @mapfile
+        write_authors if @authors
       rescue => e
         STDERR.puts "Error reading files: #{e}"
+      end
+
+      def write_authors
+        path = Git::Age::Options.instance.authors
+        STDOUT.puts "\nWriting authors file #{path} ..."
+
+        File.open(path, 'w') do |file|
+          @authors.each do |author, lines|
+            file << "#{author}: #{lines}\n"
+          end
+        end
       end
 
       def sort_dates

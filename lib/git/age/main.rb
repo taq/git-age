@@ -58,6 +58,10 @@ module Git
               matches = line.match(/[\w^]+\s\([\w\s]+(?<date>\d{4}-\d{2})-\d{2}/)
               next unless matches
 
+              tokens   = line.strip.split(')')
+              contents = tokens[1..-1].join.strip.chomp
+              next if contents.size == 0
+
               type = file_type(file)
               mapfile << "#{file}[#{type}]: #{line}\n" if mapfile
 

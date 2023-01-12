@@ -40,7 +40,7 @@ module Git
 
         return :c unless @code_regexp
 
-         @code_regexp && file.match(@code_regexp) ? :c : :u
+        @code_regexp && file.match(@code_regexp) ? :c : :u
       end
 
       def read_files
@@ -54,7 +54,7 @@ module Git
           print "Checking [#{cnt}/#{total}] #{file} ...".ljust(@winsize[1]) + "\r"
 
           begin
-            IO.popen("git blame #{file} | iconv -t utf8") do |io|
+            IO.popen("git blame #{file} | iconv -t utf8 | cut -c1-150") do |io|
               io.read.split("\n")
             end.each do |line|
               matches = line.match(/[\w^]+\s\((?<author>[\w\s]+)(?<date>\d{4}-\d{2})-\d{2}/)
@@ -148,9 +148,13 @@ module Git
       end
 
       def text?(file)
-        IO.popen("file -i -b #{file}") do |io|
+        return false unless File.exist?(file)
+
+        IO.popen("file -i -b \"#{file}\" 2> /dev/null") do |io|
           io.read
         end.match?(/\Atext/)
+      rescue
+        false
       end
 
       def show_stats

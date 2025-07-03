@@ -1,16 +1,17 @@
 PATH
   remote: .
   specs:
-    git-age (0.1.8)
+    git-age (0.1.9)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    minitest (5.14.4)
+    minitest (5.25.5)
     rake (12.3.3)
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
   git-age!
@@ -18,4 +19,4 @@ DEPENDENCIES
   rake (~> 12.0)
 
 BUNDLED WITH
-   2.1.4
+   2.6.9

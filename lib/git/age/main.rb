@@ -1,3 +1,6 @@
+# typed: false
+# frozen_string_literal: true
+
 require 'date'
 require 'io/console'
 
@@ -7,11 +10,13 @@ module Git
       attr_reader :dates, :files
 
       def initialize
-        STDOUT.puts "Waiting, analysing your repository ..."
+        puts "Waiting, analysing your repository ..."
         options = Git::Age::Options.instance
 
-        @dates   = Hash.new { |hash, key| hash[key] = { code: 0, test: 0 } }
-        @files   = fill_files
+        @dates = Hash.new { |hash, key| hash[key] = { code: 0, test: 0 } }
+        @files = fill_files
+        raise "Seems you don't have any text files under Git control. Can't proceed." if @files.size <= 0
+
         @winsize = IO.console.winsize
         @test    = options.test
         @code    = options.code
@@ -20,6 +25,9 @@ module Git
 
         @test_regexp = @test ? %r{^#{@test}} : nil
         @code_regexp = @code ? %r{^#{@code}} : nil
+      rescue StandardError => e
+        warn e.message
+        exit 1
       end
 
       def run
@@ -28,9 +36,8 @@ module Git
         create_csv
         create_image
         show_stats
-      rescue => e
-        STDERR.puts "Error: #{e}"
-        puts e.backtrace
+      rescue StarndardError => e
+        warn "Error: #{e}. Something is missing."
       end
 
       private
@@ -44,13 +51,11 @@ module Git
       end
 
       def read_files
-        cnt     = 0
-        total   = @files.size
+        cnt   = 0
+        total = @files.size
 
         @files.each do |file|
           cnt += 1
-          next unless text?(file)
-
           print "Checking [#{cnt}/#{total}] #{file} ...".ljust(@winsize[1]) + "\r"
 
           begin
@@ -72,20 +77,20 @@ module Git
 
               @authors[matches[:author].strip.chomp] += 1 if @authors
             end
-          rescue => exc
-            print "Error on file: #{file}: #{exc}\r"
+          rescue => e
+            print "Error on file: #{file}: #{e}\r"
           end
         end
 
-        @mapfile.close if @mapfile
+        @mapfile&.close
         write_authors if @authors
-      rescue => e
-        STDERR.puts "Error reading files: #{e}"
+      rescue StandardError => e
+        warn "Error reading files: #{e}"
       end
 
       def write_authors
         path = Git::Age::Options.instance.authors
-        STDOUT.puts "\nWriting authors file #{path} ..."
+        puts "\nWriting authors file #{path} ..."
 
         File.open(path, 'w') do |file|
           @authors.each do |author, lines|
@@ -95,26 +100,26 @@ module Git
       end
 
       def sort_dates
-        @dates = @dates.sort_by { |k, v| k }
+        @dates = @dates.sort_by { |k, _| k }
       end
 
       def create_csv
         output = Git::Age::Options.instance.output
-        STDOUT.puts "Creating CSV file #{output} with #{@dates.size} lines ...".ljust(@winsize[1])
+        puts "Creating CSV file #{output} with #{@dates.size} lines ...".ljust(@winsize[1])
 
         File.open(output, 'w') do |file|
-          header = "\"date\",\"code\""
+          header = ["\"date\",\"code\""]
           header << ",\"test\"" if @test
-          file << "#{header}\n"
+          file << "#{header.join}\n"
 
           @dates.each do |key, data|
-            line = "\"#{key}\",#{data[:code]}"
+            line = ["\"#{key}\",#{data[:code]}"]
             line << ",#{data[:test]}" if @test
-            file << "#{line}\n"
+            file << "#{line.join}\n"
           end
         end
-      rescue => e
-        STDERR.puts "Error creating CSV file: #{e}"
+      rescue StandardError => e
+        warn "Error creating CSV file: #{e}"
       end
 
       def create_image
@@ -124,12 +129,12 @@ module Git
         }[options.processor]
 
         unless processor
-          STDERR.puts "Image processor not supported: #{options.processor}"
+          warn "Image processor not supported: #{options.processor}"
           return
         end
 
         unless processor.present?
-          STDERR.puts "Image processor #{options.processor} is not installed"
+          warn "Image processor #{options.processor} is not installed"
           return
         end
 
@@ -138,22 +143,22 @@ module Git
 
       def fill_files
         branch = Git::Age::Options.instance.branch
-        STDOUT.puts "Reading files info from #{branch} branch ..."
+        puts "Reading text files info from #{branch} branch ..."
 
         IO.popen("git ls-tree -r #{branch} --name-only") do |io|
           io.read.split("\n")
+        end.select do |file|
+          text?(file)
         end
-      rescue => e
-        STDERR.puts "Error while searching for Git controlled files: #{e}"
+      rescue StandardError => e
+        warn "Error while searching for Git controlled files: #{e}"
       end
 
       def text?(file)
         return false unless File.exist?(file)
 
-        IO.popen("file -i -b \"#{file}\" 2> /dev/null") do |io|
-          io.read
-        end.match?(/\Atext/)
-      rescue
+        IO.popen("file -i -b \"#{file}\" 2> /dev/null", &:read).match?(/\Atext/)
+      rescue StandardError
         false
       end
 
@@ -167,12 +172,17 @@ module Git
         puts "First commit in: #{first}"
         puts "Last  commit in: #{last}"
         puts "Repository has #{diff} days with commits"
-        puts "Month with more code lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
 
-        if @test_regexp && @code_regexp
-          ratio = stats.code_to_test_ratio
-          puts "Code to test ratio: 1:#{ratio[:ratio]} (#{ratio[:code]}/#{ratio[:test]})"
+        if ustats
+          puts "Month with more code lines unchanged: #{ustats[:bigger][:date]} (#{ustats[:bigger][:lines]} lines)"
+        else
+          puts "Could not find unchanged statistics for this repo"
         end
+
+        return unless @test_regexp && @code_regexp
+
+        ratio = stats.code_to_test_ratio
+        puts "Code to test ratio: 1:#{ratio[:ratio]} (#{ratio[:code]}/#{ratio[:test]})"
       end
     end
   end

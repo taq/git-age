@@ -157,7 +157,7 @@ module Git
       def text?(file)
         return false unless File.exist?(file)
 
-        IO.popen("file -i -b \"#{file}\" 2> /dev/null", &:read).match?(/\Atext/)
+        IO.popen("file -b \"#{file}\" 2> /dev/null", &:read).match?(/text/i)
       rescue StandardError
         false
       end
